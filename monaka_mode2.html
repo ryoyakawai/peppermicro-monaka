@@ -1,0 +1,88 @@
+<html>
+  <head>
+    <link rel="import" href="./bower_components/x-webmidi/x-webmidirequestaccess.html">
+    <link rel="import" href="./components/webaudio-controls/lib/webaudio-controls.min.html"> 
+    <link rel="stylesheet" href="./css/main.css"> 
+  </head>
+  <body>
+    <x-webmidirequestaccess sysex="false" input="true" output="true"></x-webmidirequestaccess>
+    <div>
+      Output: <x-webmidioutput id="midi-output" autoreselect="true"></x-webmidioutput>
+      <span class="selecterror"><< Select Device</span>
+    </div>
+    <div>
+      <webaudio-keyboard id="keyboard"></webaudio-keyboard>
+    </div>
+
+    <script>
+    var midiout=document.querySelector("#midi-output");
+    var keyboard=document.querySelector("#keyboard");
+    var oct=5*12;
+    keyboard.addEventListener("change", function(event){
+        if(midiout.checkOutputIdx()=="false") {
+            dispNotice(document.querySelector(".selecterror"));
+        } else {
+            switch(event.note[0]) {
+                case 0:
+                    var note=convert2Hex(event.note[1]);
+                    midiout.sendRawMessage([0x80, note, 0x7f]);
+                    break;
+                case 1:
+                    var note=convert2Hex(event.note[1]);
+                    midiout.sendRawMessage([0x90, note, 0x7f]);
+                    break;
+            }
+        }
+    });
+
+    var keydown=false;
+    var keyno=[90, 83, 88, 68, 67, 86, 71, 
+               66, 72, 78, 74, 77, 188];
+/*
+                90:z, 83:s, 88:x, 68:d, 67:c
+                86:v, 71:g, 66:b, 72:h, 78:n
+                74:j, 77:m, 188:,
+*/
+    window.onkeydown=function(event){
+        if(keydown===false) {
+            keydown=event.keyCode;
+            key=getkeyNo(event.keyCode);
+            if(key!==false) {
+                var note=convert2Hex(key);
+                midiout.sendRawMessage([0x90, note, 0x7f]);
+            }
+       }
+    }
+    window.onkeyup=function(event){
+        if(keydown==event.keyCode) {
+            key=getkeyNo(event.keyCode);
+            var note=convert2Hex(key);
+            midiout.sendRawMessage([0x80, note, 0x7f]);
+            keydown=false;
+        }
+    }
+    function getkeyNo(keyCode) {
+        var out=false;
+        for(var kcode in keyno) {
+            if(keyCode==keyno[kcode]) {
+                out=kcode;
+                break;
+            }
+        }
+        return out;
+    }
+    function convert2Hex(note) {
+        return "0x"+(parseInt(note, 10)+oct).toString(16);
+    }
+    function dispNotice(elem) {
+        elem.style.setProperty("transition", "0");
+        elem.style.setProperty("opacity", 1);
+        setTimeout(function(){
+            elem.style.setProperty("transition", "1s");
+            elem.style.setProperty("opacity", 0);
+        }, 2500);
+    }
+    </script>
+
+  </body>
+</html>

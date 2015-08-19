@@ -1,0 +1,12 @@
+body {
+  font-family:arial;
+}
+
+span.selecterror {
+  background-color:#fff59d;
+  color:#EF5350;
+  padding:5px 15px;
+  border-radius:5px;
+  transition:0s;
+  opacity:0;
+}
