@@ -1,19 +1,22 @@
 <html>
   <head>
     <link rel="import" href="./bower_components/x-webmidi/x-webmidirequestaccess.html">
+    <link rel="import" href="./bower_components/x-webmidi/extras/peppermicro-monaka/peppermicro-monaka.html">
     <link rel="import" href="./components/webaudio-controls/lib/webaudio-controls.min.html"> 
     <link rel="stylesheet" href="./css/main.css"> 
   </head>
   <body>
     <x-webmidirequestaccess input="true" output="true"></x-webmidirequestaccess>
     <div>
-      Output: <x-webmidioutput id="midi-output" autoreselect="true"></x-webmidioutput>
+      <span style="display:none;"><x-webmidiinput id="midi-input" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidiinput></span>
+      Output: <x-webmidioutput id="midi-output" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidioutput>
       <span class="selecterror"><< Select Device</span>
     </div>
     <div>
       <webaudio-keyboard id="keyboard"></webaudio-keyboard>
     </div>
 
+    <peppermicro-monaka id="monaka" mode="2" inputid="midi-input" outputid="midi-output"></peppermicro-monaka>
     <script>
     var midiout=document.querySelector("#midi-output");
     var keyboard=document.querySelector("#keyboard");
