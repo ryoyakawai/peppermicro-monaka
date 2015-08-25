@@ -16,7 +16,6 @@
     var monaka;
     window.addEventListener("peppermicro-connected:monaka", function(event){
         monaka=document.querySelector("#"+event.detail.id);
-        console.log(monaka);
     }, false);
     window.addEventListener("mousedown", function(event){
         document.body.style.setProperty("background-color", "#FF5252");
