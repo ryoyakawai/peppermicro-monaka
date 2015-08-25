@@ -1,4 +1,4 @@
-<!-- x-webmidiinput.html (2015/07/22) -->
+<!-- x-webmidiinput.html (2015/08/25) -->
 <!--
 Copyright 2014 Ryoya Kawai. All rights reserved.
 
@@ -54,32 +54,44 @@ limitations under the License.
 Polymer({
     is: "x-webmidiinput",
     properties: {
+        autoselect: {
+            type: String,
+            value: ""
+        },
         autoreselect: {
             type: Boolean,
             value: true
-        }
+        },
     },
     midiAccess: null,
     inputIdx: "false",
     ready: function() {
         var self=this;
         var timerId=setInterval(function(){
+            var result={"autoselected": false, "idx":false};
             var mididom=document.getElementsByTagName("x-webmidirequestaccess");
             self.midiAccess=mididom[0];
             if(self.midiAccess.ready.input==true) {
                 clearInterval(timerId);
                 var elem=self.$["midiin"];
-                self.midiAccess.addOptions("input", "add", {"idx": "all"}, elem);
+                result=self.midiAccess.addOptions("input", "add", {"idx": "all"}, elem, null, self.autoselect);
+                if(result.autoselected===true) {
+                    // fire setMIDIINDevice
+                    var target={"value":result.idx}
+                    self.setMIDIINDevice(target);
+                    self.fire("midiin-autoselected:"+self.id, {"idx": result.idx});
+                }
                 self.$["midiin"].addEventListener("change", function(event){
                     self.setMIDIINDevice.bind(self)(event.target);
                 });
                 self.midiAccess.addEventListener("x-webmidi:input-updated", function(event){
+                    var result={"autoselected": false, "idx":false};
                     var port=event.detail.port, detail=event.detail;
                     var elem=self.$["midiin"];
                     var selected=false
                     switch(detail.member) {
                         case "new":
-                            self.midiAccess.addOptions("input", "add", detail, elem, selected);
+                            result=self.midiAccess.addOptions("input", "add", detail, elem, selected, self.autoselect);
                             break;
                         case "old":
                             if(self.autoreselect==false && port.state=="disconnected") {
@@ -88,9 +100,18 @@ Polymer({
                                     self.inputIdx="false";
                             }
                         }
-                        if(detail.idx==self.inputIdx) selected=true;
-                        self.midiAccess.addOptions("input", "update", detail, elem, selected);
+                        if(detail.idx==self.inputIdx
+                           || detail.port.name==self.autoselect) {
+                            selected=true;
+                        }
+                        result=self.midiAccess.addOptions("input", "update", detail, elem, selected, self.autoselect);
                         break;
+                    }
+                    if(result.autoselected===true) {
+                        // fire setMIDIINDevice
+                        var target={"value":result.idx}
+                        self.setMIDIINDevice(target);
+                        self.fire("midiin-autoselected:"+self.id, {"idx": result.idx});
                     }
                 });
             }

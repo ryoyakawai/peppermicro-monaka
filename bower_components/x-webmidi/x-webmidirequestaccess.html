@@ -1,4 +1,4 @@
-<!-- x-webmidirequestaccess.html (2015/07/22) -->
+<!-- x-webmidirequestaccess.html (2015/08/25) -->
 <!--
 Copyright 2014 Ryoya Kawai. All rights reserved.
 
@@ -34,7 +34,6 @@ Polymer({
         input: {
             type: Boolean,
             value: false
-            
         },
         output: {
             type: Boolean,
@@ -141,8 +140,8 @@ Polymer({
             document.body.appendChild(elem);
              */
         },
-        addOptions: function(midiType, updateType, detail, selectElem, exSelected) {
-            var ports;
+        addOptions: function(midiType, updateType, detail, selectElem, exSelected, autoSelect) {
+            var ports, result={"autoselected": false, "idx":false};
             var addIdx=detail.idx;
             switch(midiType) {
                 case "output":
@@ -152,31 +151,41 @@ Polymer({
                     ports=this.midi.inputs;
                     break;
             }
+            var out;
             switch(updateType) {
                 case "add":
                     if(addIdx=="all") {
                         for(var i=0; i<ports.length; i++) {
-                            appendOption(ports[i].name, i, selectElem);
+                            out=appendOption(ports[i].name, i, selectElem, autoSelect);
+                            if(out.autoselected===true) result=out;
+                        }
                     }
-                }
-                else if(typeof addIdx=="number"){
-                    appendOption(detail.port.name, addIdx, selectElem);
-                }
-                break;
+                    else if(typeof addIdx=="number"){
+                        result=appendOption(detail.port.name, addIdx, selectElem, autoSelect);
+                    }
+                    break;
                 case "update":
-                updateOption(ports[addIdx].state, addIdx, selectElem, exSelected);
+                    result=updateOption(ports[addIdx].state, addIdx, selectElem, exSelected);
                 break;
             }
-            function appendOption(name, idx, selectElem) {
+            function appendOption(name, idx, selectElem, autoSelect) {
                 selectElem.appendChild((new Option(name, idx)));
+                var out=false, outIdx=false;
+                if(name==autoSelect) {
+                    var op_idx=idx+1;
+                    selectElem.selectedIndex=op_idx; 
+                    out=true; outIdx=idx;
+                };
+                return {"autoselected": out, "idx":outIdx}
             }
             function updateOption(updateType, idx, selectElem, exSelected) {
+                var out=false, outIdx=false;
                 var op_idx=idx+1;
                 for(var i=0; i<selectElem.options.length; i++) {
                     if(selectElem.options[i].value==idx) {
-                        if(updateType=="disconnected") { 
-                                                        selectElem.options[i].setAttribute("hidden", "hidden");
-                                                        if(selectElem.selectedIndex==op_idx) {
+                        if(updateType=="disconnected") {
+                            selectElem.options[i].setAttribute("hidden", "hidden");
+                            if(selectElem.selectedIndex==op_idx) {
                                 selectElem.selectedIndex=0; 
                             }
                         }
@@ -184,11 +193,16 @@ Polymer({
                             selectElem.options[i].removeAttribute("hidden");
                             if(exSelected==true) {
                                 selectElem.selectedIndex=i;
+                                // Option index is including "Not Selected".
+                                // So actual device number starts 1, but midi device list starts 0.
+                                out=true; outIdx=i-1; 
                             }
                         }
                     }
                 }
+                return {"autoselected": out, "idx":outIdx}
             }
+            return result;
         }
     });
 </script>

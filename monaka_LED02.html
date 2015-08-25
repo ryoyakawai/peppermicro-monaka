@@ -1,0 +1,55 @@
+<html>
+  <head></head>
+  <body>
+    <script src="./bower_components/webcomponentsjs/webcomponents.js"></script>
+    <link rel="import" href="./bower_components/x-webmidi/x-webmidirequestaccess.html">
+    <link rel="import" href="./bower_components/x-webmidi/extras/peppermicro-monaka/peppermicro-monaka.html">
+    <x-webmidirequestaccess id="webmidiparent" input="true" output="true"></x-webmidirequestaccess>
+
+    <div>input: <x-webmidiinput id="input-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidiinput> <span id="midiinput-event-01"></span></div>
+    <div>output: <x-webmidioutput id="output-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidioutput></div>
+    <br>
+    <span>(Left click: turn on red LED; Right click: turn on green LED)</span>
+
+    <peppermicro-monaka id="monaka" mode="1" inputid="input-port-01" outputid="output-port-01"></peppermicro-monaka>
+    <script>
+    var monaka;
+    window.addEventListener("peppermicro-connected:monaka", function(event){
+        monaka=document.querySelector("#"+event.detail.id);
+    });
+    document.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+    }, false);
+    window.addEventListener("mousedown", function(event){
+        switch(event.button) {
+            case 0:
+                // left click
+                document.body.style.setProperty("background-color", "#FF5252");
+                monaka.digitalOutput(0, 1);
+                break;
+            case 2:
+                // right click
+                document.body.style.setProperty("background-color", "#80DEEA");
+                monaka.digitalOutput(1, 1);
+                break;
+        }
+    }, false);
+    window.addEventListener("mouseup", function(event){
+        switch(event.button) {
+            case 0:
+                // left click
+                document.body.style.removeProperty("background-color");
+                monaka.digitalOutput(0, 0);
+                break;
+            case 2:
+                // right click
+                document.body.style.removeProperty("background-color");
+                monaka.digitalOutput(1, 0);
+                break;
+        }
+    }, false);
+    </script>
+
+
+  </body>
+</html>

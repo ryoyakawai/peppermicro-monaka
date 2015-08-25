@@ -1,0 +1,44 @@
+<html>
+  <head>
+    <style>
+    div#canvas-area {
+      margin: 10px 0px 0px 10px;
+      border:0px solid #000;
+    }
+    </style>
+  </head>
+  <body>
+    <script src="./bower_components/webcomponentsjs/webcomponents.js"></script>
+    <link rel="import" href="./bower_components/x-webmidi/x-webmidirequestaccess.html">
+    <link rel="import" href="./bower_components/x-webmidi/extras/peppermicro-monaka/peppermicro-monaka.html">
+    <x-webmidirequestaccess id="webmidiparent" input="true" output="true"></x-webmidirequestaccess>
+    <!-- PEPPER-Monaka -->
+
+    <div>input: <x-webmidiinput id="input-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidiinput> <span id="midiinput-event-01"></span></div>
+    <div>output: <x-webmidioutput id="output-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidioutput></div>
+    <br>
+
+    <div>
+      <div>Analog[0] = <span id="analog0"></span></div>
+      <div>Analog[1] = <span id="analog1"></span></div>
+      <div>Analog[2] = <span id="analog2"></span></div>
+    </div>
+    <peppermicro-monaka id="monaka" mode="6" inputid="input-port-01" outputid="output-port-01"></peppermicro-monaka>
+
+    <script>
+    var monaka;
+    var ana0=document.querySelector("#analog0");
+    var ana1=document.querySelector("#analog1");
+    var ana2=document.querySelector("#analog2");
+    window.addEventListener("peppermicro-connected:monaka", function(event){
+        monaka=document.querySelector("#"+event.detail.id);
+        window.addEventListener("peppermicro-input-event:monaka", function(event){
+            ana0.innerHTML=event.detail.analogInput[0];
+            ana1.innerHTML=event.detail.analogInput[1];
+            ana2.innerHTML=event.detail.analogInput[2];
+        }, false);
+    }, false);
+    </script>
+
+  </body>
+</html>

@@ -1,0 +1,73 @@
+<html>
+  <head>
+    <style>
+    div#led {
+      margin: 10px 0px 0px 10px;
+      border:0px solid #000;
+      background-color: #FF1744;
+      border-radius:50%;
+      width:30px; height:30px;
+      opacity:0;
+    }
+    </style>
+  </head>
+  <body>
+    <script src="./bower_components/webcomponentsjs/webcomponents.js"></script>
+    <link rel="import" href="./bower_components/x-webmidi/x-webmidirequestaccess.html">
+    <link rel="import" href="./bower_components/x-webmidi/extras/peppermicro-monaka/peppermicro-monaka.html">
+    <x-webmidirequestaccess id="webmidiparent" input="true" output="true"></x-webmidirequestaccess>
+    <!-- PEPPER-Monaka -->
+
+    <div>input: <x-webmidiinput id="input-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidiinput> <span id="midiinput-event-01"></span></div>
+    <div>output: <x-webmidioutput id="output-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidioutput></div>
+    <br>
+
+    <div>
+      <div>Analog[0] = <span id="analog0"></span></div>
+      <div>Analog[1] = <span id="analog1"></span></div>
+    </div>
+    <div id="led"></div>
+    <div style="display:none;">(<span id="fps">00</span> fps)</div>
+
+    <peppermicro-monaka id="monaka" mode="4" inputid="input-port-01" outputid="output-port-01"></peppermicro-monaka>
+    <script>
+    var monaka;
+    var ana0=document.querySelector("#analog0");
+    var ana1=document.querySelector("#analog1");
+    var led=document.querySelector("#led");
+    window.addEventListener("peppermicro-connected:monaka", function(event){
+        monaka=document.querySelector("#"+event.detail.id);
+        requestAnimationFrame(updateValue);
+
+        var fps=document.querySelector("#fps");
+        function updateValue() {
+            var val0=monaka.getAnalogInputValues(0);
+            ana0.innerHTML=val0;
+            led.style.setProperty("opacity", val0/127);
+            var val1=monaka.getAnalogInputValues(1);
+            ana1.innerHTML=val1;
+            requestAnimationFrame(updateValue);
+            fps.innerHTML=calculateFps();
+        }
+
+        window.addEventListener("peppermicro-input-event:monaka", function(event){
+            ana0.innerHTML=event.detail.analogInput[0];
+            ana1.innerHTML=event.detail.analogInput[1];
+
+            // LED Control
+            monaka.analogOutput(0, event.detail.analogInput[0]);
+        }, false);
+
+        var lastupdateTime=0;
+        function calculateFps() {
+            var timeNow=window.performance.now();
+            out=parseInt(1/((timeNow-lastupdateTime)/1000), 10);
+            lastupdateTime=timeNow;
+            return out;
+        }
+    }, false);
+    </script>
+
+
+  </body>
+</html>

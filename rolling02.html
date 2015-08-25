@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <style>
+    body {
+      margin:0px; padding:0px;
+      background-color:#000000;
+    }
+    div#midi-selector{
+      margin:0px; padding:10px;
+      background-color:#ffffff;
+    }
+    div#three-area {
+      position: relative;
+      width: 100%;
+      height:100%;
+      margin:0px; padding:0px;
+      color:#ffffff;
+    }
+    div#earth-area {
+      position: absolute;
+      left: 0;
+      right: 0;
+      margin: 70px auto;
+      width:350px; height:350px;
+    }
+    div#disp-area {
+      position:relative;
+      float:right;
+      right:5px;
+    }
+    </style>
+  </head>
+  <body>
+    <script src="./bower_components/webcomponentsjs/webcomponents.js"></script>
+    <link rel="import" href="./bower_components/x-webmidi/x-webmidirequestaccess.html">
+    <link rel="import" href="./bower_components/x-webmidi/extras/peppermicro-monaka/peppermicro-monaka.html">
+    <x-webmidirequestaccess id="webmidiparent" input="true" output="true"></x-webmidirequestaccess>
+
+    <peppermicro-monaka id="monaka" mode="6" inputid="input-port-01" outputid="output-port-01"></peppermicro-monaka>
+
+    <div id="midi-selector">
+      <div>input: <x-webmidiinput id="input-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidiinput> <span id="midiinput-event-01"></span></div>
+      <div>output: <x-webmidioutput id="output-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidioutput></div>
+    </div>
+
+    <div id="three-area">
+      <div id="disp-area">x:<span id="axisx"></span>; y:<span id="axisy"></span>; z:<span id="axisz"></span></div>
+      <div id="earth-area"></div>
+    </div>
+
+    <script>
+    var size=350;
+    var monaka, axis={"x":0, "y":0, "z":0};
+    var ana0=document.querySelector("#analog0");
+    var ana1=document.querySelector("#analog1");
+    var ana2=document.querySelector("#analog2");
+    window.addEventListener("peppermicro-connected:monaka", function(event){
+        monaka=document.querySelector("#"+event.detail.id);
+        window.addEventListener("peppermicro-input-event:monaka", function(event){
+            axis={"x": event.detail.analogInput[0],
+                  "y": event.detail.analogInput[1],
+                  "z": event.detail.analogInput[2]};
+            document.querySelector("#axisx").innerHTML=axis.x;
+            document.querySelector("#axisy").innerHTML=axis.y;
+            document.querySelector("#axisz").innerHTML=axis.z;
+        }, false);
+    }, false);
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r52/three.js"></script>
+    <script>
+      // (1)レンダラの初期化
+      var renderer = new THREE.WebGLRenderer({ antialias:true });
+      renderer.setSize(size, size);
+      renderer.setClearColorHex(0x000000, 1);
+      document.querySelector("#earth-area").appendChild(renderer.domElement);
+ 
+      // (2)シーンの作成
+      var scene = new THREE.Scene();
+ 
+      // (3)カメラの作成
+      var camera = new THREE.PerspectiveCamera(15, 500 / 500);
+      camera.position = new THREE.Vector3(0, 0, 8);
+      camera.lookAt(new THREE.Vector3(0, 0, 0));
+      scene.add(camera);
+ 
+      // (4)ライトの作成
+      var light = new THREE.DirectionalLight(0xcccccc);
+      light.position = new THREE.Vector3(0.577, 0.577, 0.577);
+      scene.add(light);
+ 
+      var ambient = new THREE.AmbientLight(0x333333);
+      scene.add(ambient);
+ 
+      // (5)表示する物体の作成
+      var geometry = new THREE.SphereGeometry(1, 64, 64);
+      var material = new THREE.MeshPhongMaterial({
+        color: 0xffffff, ambient: 0xffffff,
+        specular: 0xcccccc, shininess:50, metal:true,
+        map: THREE.ImageUtils.loadTexture('images/earth.jpg') });
+      var mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+ 
+      // (6)レンダリング
+      var baseTime = +new Date;
+      function render() {
+        requestAnimationFrame(render);
+        //mesh.rotation.y = 0.3 * (+new Date - baseTime) / 1000;
+        mesh.rotation.x = axis.x/7;
+        mesh.rotation.y = axis.y/7;
+        camera.position.set( 0, 0, 8+(axis.z/120)*Math.exp(axis.z/30) );
+        renderer.render(scene, camera);
+      };
+      render();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,99 @@
+<html>
+  <head>
+    <style>
+    div.graph {
+      margin:0px 0px 25px 0px;
+    }
+    div#canvas-area {
+      margin: 10px 0px 0px 10px;
+      border:0px solid #000;
+    }
+    </style>
+  </head>
+  <body>
+    <script src="./bower_components/webcomponentsjs/webcomponents.js"></script>
+    <link rel="import" href="./bower_components/x-webmidi/x-webmidirequestaccess.html">
+    <link rel="import" href="./bower_components/x-webmidi/extras/peppermicro-monaka/peppermicro-monaka.html">
+    <x-webmidirequestaccess id="webmidiparent" input="true" output="true"></x-webmidirequestaccess>
+
+    <div>input: <x-webmidiinput id="input-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidiinput> <span id="midiinput-event-01"></span></div>
+    <div>output: <x-webmidioutput id="output-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidioutput></div>
+    <br>
+
+    <div id="canvas-area">
+      <div class="graph">
+        <span>X axis</span><br>
+        <canvas id="canvas-x"></canvas>
+      </div>
+      <div class="graph">
+        <span>Y axis</span><br>
+        <canvas id="canvas-y"></canvas>
+      </div>
+      <div class="graph">
+        <span>X axis</span><br>
+        <canvas id="canvas-z"></canvas>
+      </div>
+    </div>
+    <peppermicro-monaka id="monaka" mode="6" inputid="input-port-01" outputid="output-port-01"></peppermicro-monaka>
+
+    <script>
+    var monaka;
+    var ana0=document.querySelector("#analog0");
+    var ana1=document.querySelector("#analog1");
+    var ana2=document.querySelector("#analog2");
+    window.addEventListener("peppermicro-connected:monaka", function(event){
+        monaka=document.querySelector("#"+event.detail.id);
+        setInterval(function(){
+            updateGraph();
+        }, intervalTime);
+    }, false);
+
+    // drawing graph
+    var ctx={"x": null, "y": null, "z": null};
+    var width=240, height=127;
+    var intervalTime=15;
+
+    var plot={"x": Array(width), "y": Array(width), "z": Array(width)};
+    var canvas={"x": document.querySelector("#canvas-x"),
+                "y": document.querySelector("#canvas-y"),
+                "z": document.querySelector("#canvas-z")};
+    for(var key in canvas) {
+        ctx[key]=canvas[key].getContext("2d");
+        canvas[key].setAttribute("height", height+"px");
+        canvas[key].setAttribute("width", width+"px");
+    }
+
+    function updateGraph() {
+        var i=0;
+        for(var key in plot) {
+            // update value
+            plot[key].splice(0, 1);
+            plot[key].push(monaka.getAnalogInputValues(i));
+            i++;
+        }
+
+        for(var key in ctx) {
+            // update plot
+            ctx[key].beginPath();
+            ctx[key].fillStyle="rgba(0, 0, 0, 1)";
+            ctx[key].fillRect(0, 0, width, height);
+            ctx[key].fillStyle="rgba(255, 255, 255, 1)";
+            ctx[key].fillText("127", 2, 10);
+            ctx[key].fillText("0", 2, 124);
+            ctx[key].fillText("val: "+plot[key][plot[key].length-1], 205, 10);
+            ctx[key].fill();
+            ctx[key].strokeStyle="rgba(255, 255, 255, 1)";
+            for(var i=0; i<plot[key].length; i++) {
+                if(i==0) {
+                    ctx[key].moveTo(0, plot[key][i]);
+                } else {
+                    if(typeof plot[key][i]!="undefined") ctx[key].lineTo(i, 127-plot[key][i])
+                }
+            }
+            ctx[key].stroke();
+            ctx[key].closePath();
+        }
+    }
+    </script>
+  </body>
+</html>

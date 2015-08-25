@@ -1,4 +1,4 @@
-<!-- x-webmidioutput.html (2015/07/22) -->
+<!-- x-webmidioutput.html (2015/08/25) -->
 <!--
 Copyright 2014 Ryoya Kawai. All rights reserved.
 
@@ -54,10 +54,14 @@ limitations under the License.
 Polymer({
     is: "x-webmidioutput",
     properties: {
+        autoselect: {
+            type: String,
+            value: ""
+        },
         autoreselect: {
             type: Boolean,
             value: true
-        }
+        },
     },
     midiAccess: null,
     outputIdx: "false",
@@ -66,12 +70,18 @@ Polymer({
     ready: function() {
         var self=this;
         var timerId=setInterval(function(){
+            var result={"autoselected": false, "idx":false};
             var tmp=document.getElementsByTagName("x-webmidirequestaccess");
             self.midiAccess=tmp[0];
             if(self.midiAccess.ready.output==true) {
                 clearInterval(timerId);
                 var elem=self.$["midiout"];
-                self.midiAccess.addOptions("output", "add", {"idx":"all"}, elem);
+                result=self.midiAccess.addOptions("output", "add", {"idx":"all"}, elem, null, self.autoselect);
+                if(result.autoselected===true) {
+                    // fire setMIDIOUTDevice
+                    self.outputIdx=result.idx;
+                    self.fire("midiout-autoselected:"+self.id, {"idx": result.idx});
+                }
                 self.$["midiout"].addEventListener("change", function(event){
                     console.log("midioutput-updated:"+self.id);
                     self.outputIdx=event.target.value;
@@ -84,7 +94,7 @@ Polymer({
                     var selected=false
                     switch(detail.member) {
                         case "new":
-                            self.midiAccess.addOptions("output", "add", detail, elem, selected);
+                            result=self.midiAccess.addOptions("output", "add", detail, elem, selected, self.autoselect);
                             break;
                         case "old":
                             if(self.autoreselect==false && port.state=="disconnected") {
@@ -93,9 +103,17 @@ Polymer({
                                     self.outputIdx="false";
                             }
                         }
-                        if(detail.idx==self.outputIdx) selected=true;
-                        self.midiAccess.addOptions("output", "update", detail, elem, selected);
+                        if(detail.idx==self.outputIdx
+                           || detail.port.name==self.autoselect) {
+                            selected=true;
+                        }
+                        result=self.midiAccess.addOptions("output", "update", detail, elem, selected, self.autoselect);
                         break;
+                    }
+                    if(result.autoselected===true) {
+                        // fire setMIDIOUTDevice
+                        self.outputIdx=result.idx;
+                        self.fire("midiout-autoselected:"+self.id, {"idx": result.idx});
                     }
                 });
             }

@@ -1,0 +1,63 @@
+<html>
+  <head></head>
+  <body>
+    <script src="./bower_components/webcomponentsjs/webcomponents.js"></script>
+    <link rel="import" href="./bower_components/x-webmidi/x-webmidirequestaccess.html">
+    <link rel="import" href="./bower_components/x-webmidi/extras/peppermicro-monaka/peppermicro-monaka.html">
+    <x-webmidirequestaccess id="webmidiparent" input="true" output="true"></x-webmidirequestaccess>
+
+    <div>input: <x-webmidiinput id="input-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidiinput> <span id="midiinput-event-01"></span></div>
+    <div>output: <x-webmidioutput id="output-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidioutput></div>
+    <br>
+
+    <div>
+      <div>Analog[0] = <span id="analog0"></span></div>
+      <div>Analog[1] = <span id="analog1"></span></div>
+      <div>Frequency = <span id="freq"></span></div>
+      <div>Volume: <input type="range" id="volume" value="0.2" min="0" max="1.0" step="0.1"><span></span></div>
+    </div>
+
+    <peppermicro-monaka id="monaka" mode="4" inputid="input-port-01" outputid="output-port-01"></peppermicro-monaka>
+    <script>
+    function notNumber2freq(noteNumber) {
+        return 440.0 * Math.pow(2.0, (noteNumber - 69.0) / 12.0);
+    }
+    var audioCtx=new AudioContext();
+    var osc=audioCtx.createOscillator();
+    var gain=audioCtx.createGain();
+    gain.gain.value=document.querySelector("#volume").value;
+    document.querySelector("#volume").nextSibling.innerHTML=document.querySelector("#volume").value;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    
+    document.querySelector("#volume").addEventListener("change", function(event){
+        event.target.nextSibling.innerHTML=event.target.value;
+        gain.gain.value=event.target.value;
+    });
+
+    </script>
+    <script>
+    var monaka;
+    window.addEventListener("peppermicro-connected:monaka", function(event){
+        monaka=document.querySelector("#"+event.detail.id);
+    }, false);
+
+    var ana0=document.querySelector("#analog0");
+    var ana1=document.querySelector("#analog1");
+    window.addEventListener("peppermicro-input-event:monaka", function(event){
+        ana0.innerHTML=event.detail.analogInput[0];
+        ana1.innerHTML=event.detail.analogInput[1];
+        freq.innerHTML=notNumber2freq(event.detail.analogInput[0]);
+        
+        // LED Control
+        monaka.analogOutput(0, event.detail.analogInput[0]);
+
+        // Sound Control
+        osc.frequency.value=notNumber2freq(event.detail.analogInput[0]);
+    }, false);
+    </script>
+
+
+  </body>
+</html>

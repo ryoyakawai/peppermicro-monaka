@@ -1,0 +1,68 @@
+<html>
+  <head>
+    <style>
+    div#distance-area {
+      height:130px;
+      display: table-cell;
+      vertical-align: bottom;
+    }
+    div#distance {
+      margin: 10px 0px 0px 10px;
+      border:0px solid #000;
+      background-color:#ff0000;
+      width:10px;
+      height:0px;
+    }
+    </style>
+  </head>
+  <body>
+    <script src="./bower_components/webcomponentsjs/webcomponents.js"></script>
+    <link rel="import" href="./bower_components/x-webmidi/x-webmidirequestaccess.html">
+    <link rel="import" href="./bower_components/x-webmidi/extras/peppermicro-monaka/peppermicro-monaka.html">
+    <x-webmidirequestaccess id="webmidiparent" input="true" output="true"></x-webmidirequestaccess>
+
+    <div>input: <x-webmidiinput id="input-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidiinput> <span id="midiinput-event-01"></span></div>
+    <div>output: <x-webmidioutput id="output-port-01" autoselect="PEPPER-Monaka" autoreselect="true"></x-webmidioutput></div>
+    <br>
+
+    <div>
+      <div>Analog[0] = <span id="analog0"></span></div>
+    </div>
+
+    <div id="distance-area">
+      <div id="distance"></div>
+    </div>
+    <div>(<span id="fps">00</span> fps)</div>
+
+    <peppermicro-monaka id="monaka" mode="4" inputid="input-port-01" outputid="output-port-01"></peppermicro-monaka>
+    <script>
+    var monaka;
+    var ana0=document.querySelector("#analog0");
+    var dist=document.querySelector("#distance");
+    window.addEventListener("peppermicro-connected:monaka", function(event){
+        monaka=document.querySelector("#"+event.detail.id);
+        requestAnimationFrame(updateValue);
+
+        var fps=document.querySelector("#fps");
+        function updateValue() {
+            var val0=monaka.getAnalogInputValues(0);
+            ana0.innerHTML=val0;
+            dist.style.setProperty("height", val0+"px");
+            requestAnimationFrame(updateValue);
+            fps.innerHTML=calculateFps();
+        }
+
+        var lastupdateTime=0;
+        function calculateFps() {
+            var timeNow=window.performance.now();
+            out=parseInt(1/((timeNow-lastupdateTime)/1000), 10);
+            lastupdateTime=timeNow;
+            return out;
+        }
+    }, false);
+
+    </script>
+
+
+  </body>
+</html>
