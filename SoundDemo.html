@@ -29,7 +29,6 @@
     document.querySelector("#volume").nextSibling.innerHTML=document.querySelector("#volume").value;
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    osc.start();
     
     document.querySelector("#volume").addEventListener("change", function(event){
         event.target.nextSibling.innerHTML=event.target.value;
@@ -41,6 +40,9 @@
     var monaka;
     window.addEventListener("peppermicro-connected:monaka", function(event){
         monaka=document.querySelector("#"+event.detail.id);
+
+        // sound start
+        osc.start();
     }, false);
 
     var ana0=document.querySelector("#analog0");
